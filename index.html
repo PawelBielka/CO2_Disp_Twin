@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CO₂ Dispersion Twin – Industrial Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b1016;
+      --bg-alt: #141b24;
+      --accent: #00c896;
+      --accent-soft: rgba(0, 200, 150, 0.15);
+      --accent-warn: #ffb347;
+      --accent-danger: #ff5c5c;
+      --text: #f5f5f5;
+      --muted: #a0a8b3;
+      --border: #272f3a;
+      --card-radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #192437 0, #05070b 55%);
+      color: var(--text);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.4rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 1.0rem;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .app-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: baseline;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .tagline {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: linear-gradient(135deg, var(--bg-alt), #0c151f);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: 12px 12px 14px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.8rem;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+    }
+
+    .status-dot.connected {
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(0, 200, 150, 0.7);
+    }
+
+    .status-dot.disconnected {
+      background: #666;
+    }
+
+    .status-dot.error {
+      background: var(--accent-danger);
+      box-shadow: 0 0 8px rgba(255, 92, 92, 0.7);
+    }
+
+    button {
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, transform 0.05s, box-shadow 0.15s;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #020305;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    button.danger {
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
+      background: rgba(255, 92, 92, 0.1);
+    }
+
+    button.secondary {
+      border-color: var(--border);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    button:not(:disabled):active {
+      transform: scale(0.97);
+      box-shadow: 0 0 0;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .live-value {
+      font-size: 2.6rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .live-unit {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .live-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .pill-small {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .stat-tile {
+      background: rgba(4, 7, 12, 0.8);
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      padding: 6px 8px 7px;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .stat-value.small {
+      font-size: 0.85rem;
+    }
+
+    .timer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .timer-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .timer-value {
+      font-size: 0.9rem;
+      font-family: "SF Mono", "Consolas", "Menlo", monospace;
+    }
+
+    .chart-container {
+      position: relative;
+      margin-top: 4px;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at top, #151f2c 0, #05070b 60%);
+    }
+
+    .chart-overlay-labels {
+      position: absolute;
+      inset: 6px 10px auto auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      pointer-events: none;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .chart-label-pill {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .footer {
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .footer span {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>CO₂ Dispersion Twin – Field Monitor</h1>
+      <div class="subtitle">
+        Bluetooth live telemetry from Nano 33 IoT · CO₂ sensor channel #1
+      </div>
+    </div>
+    <div class="tagline">
+      Session-grade logging · Rolling statistics · Export-ready for reporting
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: LIVE / TIMERS / STATS / CONTROLS -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Live measurement</h2>
+        <div class="status-pill" id="status-pill">
+          <span class="status-dot disconnected" id="status-dot"></span>
+          <span id="status-text">Disconnected</span>
+        </div>
+      </div>
+
+      <div class="live-row">
+        <div>
+          <div class="live-value">
+            <span id="co2Value">– – –</span>
+            <span class="live-unit">ppm</span>
+          </div>
+          <div class="pill-small" id="airQualityTag">
+            Air quality: –
+          </div>
+        </div>
+        <div class="btn-row" style="justify-content:flex-end;">
+          <button class="primary" id="btnConnect">Connect</button>
+          <button class="secondary" id="btnDisconnect" disabled>Disconnect</button>
+        </div>
+      </div>
+
+      <div class="timer-grid" style="margin-top:10px;">
+        <div>
+          <div class="timer-label">Session start (local)</div>
+          <div class="timer-value" id="sessionStart">– – : – – : – –</div>
+        </div>
+        <div>
+          <div class="timer-label">Session end</div>
+          <div class="timer-value" id="sessionEnd">– – : – – : – –</div>
+        </div>
+        <div>
+          <div class="timer-label">Elapsed</div>
+          <div class="timer-value" id="sessionElapsed">00:00:00</div>
+        </div>
+        <div>
+          <div class="timer-label">System time</div>
+          <div class="timer-value" id="systemClock">– – : – – : – –</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-tile">
+          <div class="stat-label">Session avg</div>
+          <div class="stat-value" id="avgSession">–</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">Last 10 s avg</div>
+          <div class="stat-value small" id="avg10s">–</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">Last 30 s avg</div>
+          <div class="stat-value small" id="avg30s">–</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">Session min</div>
+          <div class="stat-value small" id="minSession">–</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">Session max</div>
+          <div class="stat-value small" id="maxSession">–</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label">Samples</div>
+          <div class="stat-value small" id="sampleCount">0</div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="primary" id="btnStart">Start session</button>
+        <button class="danger" id="btnStop" disabled>Stop session</button>
+        <button class="secondary" id="btnReset">Reset session</button>
+        <button class="secondary" id="btnExport">Export CSV</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: CHART -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Live CO₂ trend</h2>
+        <span class="pill-small" id="windowInfo">Chart window: last 10 min</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="chart" width="700" height="260"></canvas>
+        <div class="chart-overlay-labels">
+          <div class="chart-label-pill" id="chartMinLabel">min: –</div>
+          <div class="chart-label-pill" id="chartMaxLabel">max: –</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Device: CO2-Nano33 via BLE (service <code>19B1…1214</code>)</span>
+    <span>Web Bluetooth · Optimized for Chrome / Edge (desktop & Android)</span>
+  </footer>
+
+  <script>
+    // UUIDs must match Arduino sketch
+    const SERVICE_UUID = "19b10010-e8f2-537e-4f6c-d104768a1214";
+    const CHAR_UUID    = "19b10011-e8f2-537e-4f6c-d104768a1214";
+
+    // DOM refs
+    const statusDot    = document.getElementById("status-dot");
+    const statusText   = document.getElementById("status-text");
+    const btnConnect   = document.getElementById("btnConnect");
+    const btnDisconnect= document.getElementById("btnDisconnect");
+
+    const valueEl      = document.getElementById("co2Value");
+    const airQualityTag= document.getElementById("airQualityTag");
+
+    const sessionStartEl = document.getElementById("sessionStart");
+    const sessionEndEl   = document.getElementById("sessionEnd");
+    const sessionElapsedEl = document.getElementById("sessionElapsed");
+    const systemClockEl    = document.getElementById("systemClock");
+
+    const avgSessionEl  = document.getElementById("avgSession");
+    const avg10sEl      = document.getElementById("avg10s");
+    const avg30sEl      = document.getElementById("avg30s");
+    const minSessionEl  = document.getElementById("minSession");
+    const maxSessionEl  = document.getElementById("maxSession");
+    const sampleCountEl = document.getElementById("sampleCount");
+
+    const btnStart    = document.getElementById("btnStart");
+    const btnStop     = document.getElementById("btnStop");
+    const btnReset    = document.getElementById("btnReset");
+    const btnExport   = document.getElementById("btnExport");
+
+    const chartCanvas = document.getElementById("chart");
+    const ctx         = chartCanvas.getContext("2d");
+    const chartMinLabel = document.getElementById("chartMinLabel");
+    const chartMaxLabel = document.getElementById("chartMaxLabel");
+    const windowInfoEl  = document.getElementById("windowInfo");
+
+    // BLE state
+    let bleDevice = null;
+    let bleCharacteristic = null;
+    let isConnected = false;
+
+    // Measurement state
+    const MAX_HISTORY_MS = 10 * 60 * 1000; // 10 min dla wykresu
+    let samples = []; // { t: ms, v: ppm }
+
+    let isMeasuring = false;
+    let measurementStartTime = null; // Date or null
+    let measurementEndTime   = null; // Date or null
+
+    let timerIntervalId = null;
+
+    function setStatus(state, message) {
+      statusDot.classList.remove("connected", "disconnected", "error");
+      if (state === "connected") statusDot.classList.add("connected");
+      else if (state === "error") statusDot.classList.add("error");
+      else statusDot.classList.add("disconnected");
+      statusText.textContent = message;
+    }
+
+    function formatTimeHHMMSS(date) {
+      if (!date) return "--:--:--";
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+
+    function formatElapsed(ms) {
+      if (ms < 0) ms = 0;
+      const totalSec = Math.floor(ms / 1000);
+      const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+      const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+      const s = String(totalSec % 60).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+
+    function classifyAirQuality(ppm) {
+      if (ppm == null || isNaN(ppm)) return "Air quality: –";
+      if (ppm <= 800) return "Air quality: GOOD (ventilation OK)";
+      if (ppm <= 1200) return "Air quality: FAIR (monitor)";
+      if (ppm <= 2000) return "Air quality: POOR (increase ventilation)";
+      return "Air quality: CRITICAL (take action)";
+    }
+
+    function updateAirQualityTag(ppm) {
+      airQualityTag.textContent = classifyAirQuality(ppm);
+      airQualityTag.style.borderColor = "var(--border)";
+      airQualityTag.style.color = "var(--muted)";
+      airQualityTag.style.backgroundColor = "rgba(255,255,255,0.02)";
+
+      if (ppm != null && !isNaN(ppm)) {
+        if (ppm > 2000) {
+          airQualityTag.style.borderColor = "var(--accent-danger)";
+          airQualityTag.style.color = "var(--accent-danger)";
+          airQualityTag.style.backgroundColor = "rgba(255,92,92,0.12)";
+        } else if (ppm > 1200) {
+          airQualityTag.style.borderColor = "var(--accent-warn)";
+          airQualityTag.style.color = "var(--accent-warn)";
+          airQualityTag.style.backgroundColor = "rgba(255,179,71,0.12)";
+        } else if (ppm <= 800) {
+          airQualityTag.style.borderColor = "var(--accent)";
+          airQualityTag.style.color = "var(--accent)";
+          airQualityTag.style.backgroundColor = "rgba(0,200,150,0.12)";
+        }
+      }
+    }
+
+    async function connect() {
+      try {
+        if (!navigator.bluetooth) {
+          setStatus("error", "Web Bluetooth not supported");
+          alert("Your browser does not support Web Bluetooth.");
+          return;
+        }
+
+        setStatus("disconnected", "Requesting device...");
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: "CO2-Nano33" }],
+          optionalServices: [SERVICE_UUID],
+        });
+
+        bleDevice = device;
+        bleDevice.addEventListener("gattserverdisconnected", onDisconnected);
+
+        setStatus("disconnected", "Connecting...");
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        const characteristic = await service.getCharacteristic(CHAR_UUID);
+
+        bleCharacteristic = characteristic;
+
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener(
+          "characteristicvaluechanged",
+          handleNotification
+        );
+
+        isConnected = true;
+        btnConnect.disabled = true;
+        btnDisconnect.disabled = false;
+        setStatus("connected", "Connected · streaming data");
+
+      } catch (err) {
+        console.error(err);
+        setStatus("error", "Error: " + err.message);
+      }
+    }
+
+    function onDisconnected() {
+      isConnected = false;
+      btnConnect.disabled = false;
+      btnDisconnect.disabled = true;
+      setStatus("disconnected", "Disconnected");
+
+      // jeżeli sesja była aktywna – zamykamy ją z timestampem
+      if (isMeasuring && !measurementEndTime) {
+        measurementEndTime = new Date();
+        isMeasuring = false;
+      }
+      updateTimersUI();
+      recalcStats();
+    }
+
+    async function disconnect() {
+      if (bleDevice && bleDevice.gatt.connected) {
+        await bleDevice.gatt.disconnect();
+      }
+    }
+
+    function handleNotification(event) {
+      const dv = event.target.value;
+      const co2 = dv.getInt32(0, true); // int32 LE
+
+      const now = Date.now();
+      // zapis globalny (do wykresu i statystyk)
+      samples.push({ t: now, v: co2 });
+      // trymowanie historii
+      while (samples.length && samples[0].t < now - MAX_HISTORY_MS) {
+        samples.shift();
+      }
+
+      // Wartość live
+      valueEl.textContent = isFinite(co2) ? co2 : "– – –";
+      updateAirQualityTag(co2);
+
+      // Statystyki rejestrujemy tylko w aktywnej sesji
+      if (isMeasuring && measurementStartTime) {
+        recalcStats();
+      }
+
+      drawChart();
+    }
+
+    function recalcStats() {
+      if (!measurementStartTime) {
+        setStatsToEmpty();
+        return;
+      }
+
+      const sessionEndRef = measurementEndTime
+        ? measurementEndTime.getTime()
+        : Date.now();
+
+      const sessionSamples = samples.filter(
+        (s) => s.t >= measurementStartTime.getTime() && s.t <= sessionEndRef
+      );
+
+      if (!sessionSamples.length) {
+        setStatsToEmpty();
+        return;
+      }
+
+      let min = Infinity;
+      let max = -Infinity;
+      let sum = 0;
+
+      for (const s of sessionSamples) {
+        if (s.v < min) min = s.v;
+        if (s.v > max) max = s.v;
+        sum += s.v;
+      }
+
+      const avgSession = sum / sessionSamples.length;
+
+      const nowRef = sessionEndRef;
+      const window10 = nowRef - 10_000;
+      const window30 = nowRef - 30_000;
+
+      const last10 = sessionSamples.filter((s) => s.t >= window10);
+      const last30 = sessionSamples.filter((s) => s.t >= window30);
+
+      const avg10 =
+        last10.length > 0
+          ? last10.reduce((acc, s) => acc + s.v, 0) / last10.length
+          : null;
+
+      const avg30 =
+        last30.length > 0
+          ? last30.reduce((acc, s) => acc + s.v, 0) / last30.length
+          : null;
+
+      avgSessionEl.textContent = avgSession.toFixed(1) + " ppm";
+      avg10sEl.textContent = avg10 != null ? avg10.toFixed(1) + " ppm" : "–";
+      avg30sEl.textContent = avg30 != null ? avg30.toFixed(1) + " ppm" : "–";
+      minSessionEl.textContent = isFinite(min) ? min + " ppm" : "–";
+      maxSessionEl.textContent = isFinite(max) ? max + " ppm" : "–";
+      sampleCountEl.textContent = sessionSamples.length.toString();
+    }
+
+    function setStatsToEmpty() {
+      avgSessionEl.textContent = "–";
+      avg10sEl.textContent = "–";
+      avg30sEl.textContent = "–";
+      minSessionEl.textContent = "–";
+      maxSessionEl.textContent = "–";
+      sampleCountEl.textContent = "0";
+    }
+
+    function drawChart() {
+      const w = chartCanvas.width;
+      const h = chartCanvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#05070b";
+      ctx.fillRect(0, 0, w, h);
+
+      if (samples.length < 2) {
+        chartMinLabel.textContent = "min: –";
+        chartMaxLabel.textContent = "max: –";
+        return;
+      }
+
+      let min = Infinity;
+      let max = -Infinity;
+      for (const s of samples) {
+        if (s.v < min) min = s.v;
+        if (s.v > max) max = s.v;
+      }
+      if (!isFinite(min) || !isFinite(max) || max === min) {
+        max = min + 1;
+      }
+
+      // siatka pozioma
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const gridLines = 4;
+      for (let i = 0; i <= gridLines; i++) {
+        const y = 10 + ((h - 30) * i) / gridLines;
+        ctx.moveTo(40, y);
+        ctx.lineTo(w - 6, y);
+      }
+      ctx.stroke();
+
+      // oś czasu (dolna)
+      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.beginPath();
+      ctx.moveTo(40, h - 20);
+      ctx.lineTo(w - 6, h - 20);
+      ctx.stroke();
+
+      // wykres
+      const timeSpan = samples[samples.length - 1].t - samples[0].t || 1;
+      ctx.strokeStyle = "#00c896";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      samples.forEach((s, idx) => {
+        const x =
+          40 +
+          ((w - 50) * (s.t - samples[0].t)) / timeSpan; // od lewej (40) do prawej (w-10)
+        const norm = (s.v - min) / (max - min);
+        const y = h - 20 - norm * (h - 40);
+
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      chartMinLabel.textContent = "min: " + Math.round(min) + " ppm";
+      chartMaxLabel.textContent = "max: " + Math.round(max) + " ppm";
+
+      const minutesWindow = (timeSpan / 60000).toFixed(1);
+      windowInfoEl.textContent = `Chart window: last ~${minutesWindow} min`;
+    }
+
+    function startSession() {
+      const now = new Date();
+      measurementStartTime = now;
+      measurementEndTime = null;
+      isMeasuring = true;
+
+      sessionStartEl.textContent = formatTimeHHMMSS(now);
+      sessionEndEl.textContent = "--:--:--";
+      sessionElapsedEl.textContent = "00:00:00";
+
+      // nie czyścimy samples – po prostu statystyki liczą od measurementStartTime
+      recalcStats();
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+    }
+
+    function stopSession() {
+      if (!isMeasuring) return;
+      const now = new Date();
+      measurementEndTime = now;
+      isMeasuring = false;
+
+      sessionEndEl.textContent = formatTimeHHMMSS(now);
+      updateTimersUI();
+      recalcStats();
+
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+    }
+
+    function resetSession() {
+      isMeasuring = false;
+      measurementStartTime = null;
+      measurementEndTime = null;
+      samples = []; // czyścimy wykres i staty
+
+      sessionStartEl.textContent = "--:--:--";
+      sessionEndEl.textContent = "--:--:--";
+      sessionElapsedEl.textContent = "00:00:00";
+      setStatsToEmpty();
+      drawChart();
+
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+    }
+
+    function updateTimersUI() {
+      // zegar systemowy
+      const now = new Date();
+      systemClockEl.textContent = formatTimeHHMMSS(now);
+
+      if (!measurementStartTime) {
+        sessionElapsedEl.textContent = "00:00:00";
+        return;
+      }
+
+      const endRef = measurementEndTime || now;
+      const elapsedMs = endRef.getTime() - measurementStartTime.getTime();
+      sessionElapsedEl.textContent = formatElapsed(elapsedMs);
+    }
+
+    function exportCSV() {
+      if (!measurementStartTime) {
+        alert("No active session. Start a session first.");
+        return;
+      }
+      const endRef = measurementEndTime
+        ? measurementEndTime.getTime()
+        : Date.now();
+
+      const sessionSamples = samples.filter(
+        (s) => s.t >= measurementStartTime.getTime() && s.t <= endRef
+      );
+
+      if (!sessionSamples.length) {
+        alert("No data collected in this session.");
+        return;
+      }
+
+      let csv = "timestamp_iso,elapsed_s,co2_ppm\n";
+      for (const s of sessionSamples) {
+        const ts = new Date(s.t).toISOString();
+        const elapsedSec = ((s.t - measurementStartTime.getTime()) / 1000).toFixed(3);
+        csv += `${ts},${elapsedSec},${s.v}\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const tsLabel = new Date().toISOString().replace(/[:.]/g, "-");
+      a.download = `co2_session_${tsLabel}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Event handlers
+    btnConnect.addEventListener("click", () => connect());
+    btnDisconnect.addEventListener("click", () => disconnect());
+    btnStart.addEventListener("click", () => startSession());
+    btnStop.addEventListener("click", () => stopSession());
+    btnReset.addEventListener("click", () => resetSession());
+    btnExport.addEventListener("click", () => exportCSV());
+
+    // Zegar systemowy – update co sekundę
+    setInterval(updateTimersUI, 1000);
+
+    // Inicjalny rysunek
+    drawChart();
+  </script>
+</body>
+</html>
