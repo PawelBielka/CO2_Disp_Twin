@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CO₂ Dispersion Twin – Industrial Dashboard</title>
+  <title>CO₂ Field Monitor – Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -426,11 +426,11 @@
     <div>
       <h1>CO₂ Dispersion Twin – Field Monitor</h1>
       <div class="subtitle">
-        Bluetooth live telemetry from Nano 33 IoT · CO₂ sensor channel #1
+        Bluetooth live telemetry from Nano 33 IoT · high-responsive CO₂ sensor 2091-SPRINTIR-WF-20-ND
       </div>
     </div>
     <div class="tagline">
-      Industrial dashboard · Session-grade logging · Designed by Paweł Bielka (bielka@agh.edu.pl)
+      Industrial dashboard · IoT Live Telemetry · Designed by Paweł Bielka (bielka@agh.edu.pl)
     </div>
   </header>
 
@@ -577,7 +577,7 @@
 
   <footer class="footer">
     <span>Device: CO2-Nano33 via BLE (service <code>19B1…1214</code>) · Web Bluetooth</span>
-    <span>Author: Paweł Bielka · bielka@agh.edu.pl · CO₂ Dispersion Twin field monitoring dashboard</span>
+    <span>© 2025 | Paweł Bielka | All Rights Reserved</span>
   </footer>
 
   <script>
@@ -695,11 +695,11 @@
     }
 
     function classifyAirQuality(ppm) {
-      if (ppm == null || isNaN(ppm)) return "Air quality: –";
-      if (ppm <= 800) return "Air quality: GOOD (ventilation OK)";
-      if (ppm <= 1200) return "Air quality: FAIR (monitor)";
-      if (ppm <= 2000) return "Air quality: POOR (increase ventilation)";
-      return "Air quality: CRITICAL (take action)";
+      if (ppm == null || isNaN(ppm)) return "(indoor) Air quality: –";
+      if (ppm <= 800) return "(indoor) Air quality: GOOD (ventilation OK)";
+      if (ppm <= 1200) return "(indoor) Air quality: FAIR (monitor)";
+      if (ppm <= 2000) return "(indoor) Air quality: POOR (increase ventilation)";
+      return "(indoor) Air quality: CRITICAL (take action)";
     }
 
     function updateAirQualityTag(ppm) {
