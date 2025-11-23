@@ -9,7 +9,7 @@
       --bg: #0b1016;
       --bg-alt: #141b24;
       --accent: #00c896;
-      --accent-soft: rgba(0, 200, 150, 0.15);
+      --accent-soft: rgba(0, 200, 150, 0.18);
       --accent-warn: #ffb347;
       --accent-danger: #ff5c5c;
       --text: #f5f5f5;
@@ -39,7 +39,7 @@
     }
 
     h2 {
-      font-size: 1.0rem;
+      font-size: 1rem;
       margin: 0 0 8px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -69,9 +69,10 @@
       display: grid;
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
       gap: 12px;
+      margin-bottom: 12px;
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .layout {
         grid-template-columns: 1fr;
       }
@@ -90,6 +91,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
+      gap: 8px;
     }
 
     .status-pill {
@@ -156,6 +158,11 @@
       border-color: var(--border);
       color: var(--muted);
       background: rgba(255, 255, 255, 0.03);
+    }
+
+    button.small {
+      font-size: 0.75rem;
+      padding: 4px 10px;
     }
 
     button:disabled {
@@ -298,6 +305,120 @@
     .footer span {
       opacity: 0.8;
     }
+
+    /* Sessions card */
+    .sessions-layout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .sessions-container {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .sessions-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .session-list {
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .session-item {
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: rgba(5, 9, 15, 0.9);
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 4px 8px;
+      align-items: center;
+      cursor: default;
+    }
+
+    .session-item.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 200, 150, 0.4);
+    }
+
+    .session-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .session-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .session-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .session-stats-line {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .session-chart-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .session-chart-controls input[type="range"] {
+      width: 100%;
+    }
+
+    /* Log window */
+    .log-window {
+      font-family: "SF Mono", "Consolas", "Menlo", monospace;
+      font-size: 0.75rem;
+      background: #05070b;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      line-height: 1.4;
+    }
+
+    .log-line {
+      white-space: pre;
+    }
+
+    .log-line.info {
+      color: #c3d6ff;
+    }
+
+    .log-line.warn {
+      color: #ffd37a;
+    }
+
+    .log-line.error {
+      color: #ff8c8c;
+    }
+
+    .log-line.system {
+      color: #8de6c4;
+    }
   </style>
 </head>
 <body>
@@ -309,7 +430,7 @@
       </div>
     </div>
     <div class="tagline">
-      Session-grade logging · Rolling statistics · Export-ready for reporting
+      Industrial dashboard · Session-grade logging · Designed by Paweł Bielka (bielka@agh.edu.pl)
     </div>
   </header>
 
@@ -390,15 +511,18 @@
         <button class="primary" id="btnStart">Start session</button>
         <button class="danger" id="btnStop" disabled>Stop session</button>
         <button class="secondary" id="btnReset">Reset session</button>
-        <button class="secondary" id="btnExport">Export CSV</button>
+        <button class="secondary" id="btnExport">Export current session</button>
       </div>
     </section>
 
-    <!-- RIGHT: CHART -->
+    <!-- RIGHT: LIVE CHART -->
     <section class="card">
       <div class="card-header">
         <h2>Live CO₂ trend</h2>
-        <span class="pill-small" id="windowInfo">Chart window: last 10 min</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="pill-small" id="windowInfo">Chart window: last 10 min</span>
+          <button class="secondary small" id="btnClearLive">Clear live chart</button>
+        </div>
       </div>
       <div class="chart-container">
         <canvas id="chart" width="700" height="260"></canvas>
@@ -410,9 +534,50 @@
     </section>
   </main>
 
+  <!-- SESSIONS & HISTORICAL VIEW -->
+  <section class="card">
+    <div class="sessions-layout-header">
+      <h2>Sessions & historical review</h2>
+      <span class="pill-small" id="sessionSummaryTag">
+        No stored sessions
+      </span>
+    </div>
+
+    <div class="sessions-container">
+      <!-- List of sessions -->
+      <div>
+        <div class="session-list" id="sessionList"></div>
+      </div>
+
+      <!-- Historical chart -->
+      <div>
+        <div class="session-chart-controls">
+          <div>
+            Selected session:
+            <span id="selectedSessionLabel">none</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span>Scroll</span>
+            <input type="range" id="sessionScroll" min="0" max="100" value="0" />
+          </div>
+        </div>
+        <canvas id="sessionChart" width="700" height="220"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENT LOG -->
+  <section class="card">
+    <div class="card-header">
+      <h2>Event log</h2>
+      <button class="secondary small" id="btnClearLog">Clear log</button>
+    </div>
+    <div class="log-window" id="logWindow"></div>
+  </section>
+
   <footer class="footer">
-    <span>Device: CO2-Nano33 via BLE (service <code>19B1…1214</code>)</span>
-    <span>Web Bluetooth · Optimized for Chrome / Edge (desktop & Android)</span>
+    <span>Device: CO2-Nano33 via BLE (service <code>19B1…1214</code>) · Web Bluetooth</span>
+    <span>Author: Paweł Bielka · bielka@agh.edu.pl · CO₂ Dispersion Twin field monitoring dashboard</span>
   </footer>
 
   <script>
@@ -451,6 +616,17 @@
     const chartMinLabel = document.getElementById("chartMinLabel");
     const chartMaxLabel = document.getElementById("chartMaxLabel");
     const windowInfoEl  = document.getElementById("windowInfo");
+    const btnClearLive  = document.getElementById("btnClearLive");
+
+    const sessionListEl        = document.getElementById("sessionList");
+    const sessionSummaryTagEl  = document.getElementById("sessionSummaryTag");
+    const sessionChartCanvas   = document.getElementById("sessionChart");
+    const sessionCtx           = sessionChartCanvas.getContext("2d");
+    const sessionScroll        = document.getElementById("sessionScroll");
+    const selectedSessionLabel = document.getElementById("selectedSessionLabel");
+
+    const logWindowEl = document.getElementById("logWindow");
+    const btnClearLog = document.getElementById("btnClearLog");
 
     // BLE state
     let bleDevice = null;
@@ -458,21 +634,50 @@
     let isConnected = false;
 
     // Measurement state
-    const MAX_HISTORY_MS = 10 * 60 * 1000; // 10 min dla wykresu
-    let samples = []; // { t: ms, v: ppm }
+    const MAX_HISTORY_MS = 10 * 60 * 1000; // 10 min dla live wykresu
+    let liveSamples = []; // { t: ms, v: ppm }
+
+    // Sessions management
+    let sessions = []; // { id, label, startTime: Date, endTime: Date|null, samples: Array<{t,v}> }
+    let currentSession = null;
+    let nextSessionId = 1;
+    let selectedSessionId = null;
 
     let isMeasuring = false;
     let measurementStartTime = null; // Date or null
     let measurementEndTime   = null; // Date or null
 
-    let timerIntervalId = null;
+    // ----- Utility: Logging -----
+    function logEvent(message, level = "info") {
+      const now = new Date();
+      const ts = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const line = document.createElement("div");
+      line.className = `log-line ${level}`;
+      line.textContent = `[${ts}] ${message}`;
+      logWindowEl.appendChild(line);
 
+      // Ogranicz liczbę linii (np. do 300)
+      const maxLines = 300;
+      while (logWindowEl.childNodes.length > maxLines) {
+        logWindowEl.removeChild(logWindowEl.firstChild);
+      }
+      logWindowEl.scrollTop = logWindowEl.scrollHeight;
+    }
+
+    // ----- Status helpers -----
     function setStatus(state, message) {
       statusDot.classList.remove("connected", "disconnected", "error");
       if (state === "connected") statusDot.classList.add("connected");
       else if (state === "error") statusDot.classList.add("error");
       else statusDot.classList.add("disconnected");
       statusText.textContent = message;
+      if (state === "connected") {
+        logEvent(message, "system");
+      } else if (state === "error") {
+        logEvent(message, "error");
+      } else {
+        logEvent(message, "info");
+      }
     }
 
     function formatTimeHHMMSS(date) {
@@ -520,6 +725,7 @@
       }
     }
 
+    // ----- BLE connect / disconnect -----
     async function connect() {
       try {
         if (!navigator.bluetooth) {
@@ -554,6 +760,7 @@
         btnConnect.disabled = true;
         btnDisconnect.disabled = false;
         setStatus("connected", "Connected · streaming data");
+        logEvent("BLE device connected and notifications started", "system");
 
       } catch (err) {
         console.error(err);
@@ -567,64 +774,59 @@
       btnDisconnect.disabled = true;
       setStatus("disconnected", "Disconnected");
 
-      // jeżeli sesja była aktywna – zamykamy ją z timestampem
-      if (isMeasuring && !measurementEndTime) {
+      if (isMeasuring && !measurementEndTime && currentSession) {
         measurementEndTime = new Date();
+        currentSession.endTime = measurementEndTime;
         isMeasuring = false;
+        logEvent(`Session ${currentSession.label} ended due to disconnect`, "warn");
       }
       updateTimersUI();
-      recalcStats();
+      recalcStatsCurrentSession();
+      renderSessionsList();
+      drawSessionChart();
     }
 
     async function disconnect() {
       if (bleDevice && bleDevice.gatt.connected) {
         await bleDevice.gatt.disconnect();
       }
+      logEvent("BLE disconnect requested by user", "info");
     }
 
+    // ----- Notifications from BLE (CO₂ values) -----
     function handleNotification(event) {
       const dv = event.target.value;
       const co2 = dv.getInt32(0, true); // int32 LE
+      const nowMs = Date.now();
+      const sample = { t: nowMs, v: co2 };
 
-      const now = Date.now();
-      // zapis globalny (do wykresu i statystyk)
-      samples.push({ t: now, v: co2 });
-      // trymowanie historii
-      while (samples.length && samples[0].t < now - MAX_HISTORY_MS) {
-        samples.shift();
+      // LIVE HISTORY (10 min window)
+      liveSamples.push(sample);
+      while (liveSamples.length && liveSamples[0].t < nowMs - MAX_HISTORY_MS) {
+        liveSamples.shift();
+      }
+
+      // Session: only if measuring
+      if (isMeasuring && currentSession) {
+        currentSession.samples.push(sample);
       }
 
       // Wartość live
       valueEl.textContent = isFinite(co2) ? co2 : "– – –";
       updateAirQualityTag(co2);
 
-      // Statystyki rejestrujemy tylko w aktywnej sesji
-      if (isMeasuring && measurementStartTime) {
-        recalcStats();
-      }
-
-      drawChart();
+      recalcStatsCurrentSession();
+      drawLiveChart();
     }
 
-    function recalcStats() {
-      if (!measurementStartTime) {
+    // ----- Stats for current session -----
+    function recalcStatsCurrentSession() {
+      if (!currentSession || !currentSession.samples.length) {
         setStatsToEmpty();
         return;
       }
 
-      const sessionEndRef = measurementEndTime
-        ? measurementEndTime.getTime()
-        : Date.now();
-
-      const sessionSamples = samples.filter(
-        (s) => s.t >= measurementStartTime.getTime() && s.t <= sessionEndRef
-      );
-
-      if (!sessionSamples.length) {
-        setStatsToEmpty();
-        return;
-      }
-
+      const sessionSamples = currentSession.samples;
       let min = Infinity;
       let max = -Infinity;
       let sum = 0;
@@ -637,7 +839,7 @@
 
       const avgSession = sum / sessionSamples.length;
 
-      const nowRef = sessionEndRef;
+      const nowRef = (measurementEndTime || new Date()).getTime();
       const window10 = nowRef - 10_000;
       const window30 = nowRef - 30_000;
 
@@ -671,7 +873,8 @@
       sampleCountEl.textContent = "0";
     }
 
-    function drawChart() {
+    // ----- Live chart -----
+    function drawLiveChart() {
       const w = chartCanvas.width;
       const h = chartCanvas.height;
 
@@ -679,15 +882,16 @@
       ctx.fillStyle = "#05070b";
       ctx.fillRect(0, 0, w, h);
 
-      if (samples.length < 2) {
+      if (liveSamples.length < 2) {
         chartMinLabel.textContent = "min: –";
         chartMaxLabel.textContent = "max: –";
+        windowInfoEl.textContent = "Chart window: last 10 min";
         return;
       }
 
       let min = Infinity;
       let max = -Infinity;
-      for (const s of samples) {
+      for (const s of liveSamples) {
         if (s.v < min) min = s.v;
         if (s.v > max) max = s.v;
       }
@@ -714,16 +918,16 @@
       ctx.lineTo(w - 6, h - 20);
       ctx.stroke();
 
-      // wykres
-      const timeSpan = samples[samples.length - 1].t - samples[0].t || 1;
+      const timeSpan = liveSamples[liveSamples.length - 1].t - liveSamples[0].t || 1;
+
       ctx.strokeStyle = "#00c896";
       ctx.lineWidth = 2;
       ctx.beginPath();
 
-      samples.forEach((s, idx) => {
+      liveSamples.forEach((s, idx) => {
         const x =
           40 +
-          ((w - 50) * (s.t - samples[0].t)) / timeSpan; // od lewej (40) do prawej (w-10)
+          ((w - 50) * (s.t - liveSamples[0].t)) / timeSpan;
         const norm = (s.v - min) / (max - min);
         const y = h - 20 - norm * (h - 40);
 
@@ -734,60 +938,314 @@
 
       chartMinLabel.textContent = "min: " + Math.round(min) + " ppm";
       chartMaxLabel.textContent = "max: " + Math.round(max) + " ppm";
-
       const minutesWindow = (timeSpan / 60000).toFixed(1);
       windowInfoEl.textContent = `Chart window: last ~${minutesWindow} min`;
     }
 
+    function clearLiveChart() {
+      liveSamples = [];
+      drawLiveChart();
+      logEvent("Live chart cleared by user", "info");
+    }
+
+    // ----- Session management -----
     function startSession() {
+      if (isMeasuring && currentSession) {
+        logEvent("Session already running – stop or reset before starting a new one", "warn");
+        return;
+      }
+
       const now = new Date();
+      const id = nextSessionId++;
+      const label = `Session #${id}`;
+
+      currentSession = {
+        id,
+        label,
+        startTime: now,
+        endTime: null,
+        samples: [],
+      };
+      sessions.push(currentSession);
+      isMeasuring = true;
       measurementStartTime = now;
       measurementEndTime = null;
-      isMeasuring = true;
 
       sessionStartEl.textContent = formatTimeHHMMSS(now);
       sessionEndEl.textContent = "--:--:--";
       sessionElapsedEl.textContent = "00:00:00";
+      selectedSessionId = currentSession.id;
 
-      // nie czyścimy samples – po prostu statystyki liczą od measurementStartTime
-      recalcStats();
+      recalcStatsCurrentSession();
+      renderSessionsList();
+      drawSessionChart();
+      updateSessionsSummaryTag();
 
       btnStart.disabled = true;
       btnStop.disabled = false;
+
+      logEvent(`${label} started`, "system");
     }
 
     function stopSession() {
-      if (!isMeasuring) return;
+      if (!isMeasuring || !currentSession) {
+        logEvent("Stop session requested but no active session", "warn");
+        return;
+      }
       const now = new Date();
       measurementEndTime = now;
+      currentSession.endTime = now;
       isMeasuring = false;
 
       sessionEndEl.textContent = formatTimeHHMMSS(now);
       updateTimersUI();
-      recalcStats();
+      recalcStatsCurrentSession();
+      renderSessionsList();
+      drawSessionChart();
+      updateSessionsSummaryTag();
 
       btnStart.disabled = false;
       btnStop.disabled = true;
+
+      logEvent(`${currentSession.label} stopped`, "system");
     }
 
     function resetSession() {
+      if (currentSession) {
+        logEvent(`Current session ${currentSession.label} discarded by reset`, "warn");
+        sessions = sessions.filter((s) => s.id !== currentSession.id);
+        if (selectedSessionId === currentSession.id) {
+          selectedSessionId = null;
+        }
+        currentSession = null;
+      }
       isMeasuring = false;
       measurementStartTime = null;
       measurementEndTime = null;
-      samples = []; // czyścimy wykres i staty
 
       sessionStartEl.textContent = "--:--:--";
       sessionEndEl.textContent = "--:--:--";
       sessionElapsedEl.textContent = "00:00:00";
       setStatsToEmpty();
-      drawChart();
+      renderSessionsList();
+      drawSessionChart();
+      updateSessionsSummaryTag();
 
       btnStart.disabled = false;
       btnStop.disabled = true;
     }
 
+    function updateSessionsSummaryTag() {
+      const count = sessions.length;
+      if (!count) {
+        sessionSummaryTagEl.textContent = "No stored sessions";
+      } else {
+        sessionSummaryTagEl.textContent = `Stored sessions: ${count}`;
+      }
+    }
+
+    function renderSessionsList() {
+      sessionListEl.innerHTML = "";
+      if (!sessions.length) {
+        const empty = document.createElement("div");
+        empty.className = "session-meta";
+        empty.textContent = "No sessions recorded yet. Start a session to log measurements.";
+        sessionListEl.appendChild(empty);
+        return;
+      }
+
+      sessions
+        .slice()
+        .sort((a, b) => a.startTime - b.startTime)
+        .forEach((session) => {
+          const item = document.createElement("div");
+          item.className = "session-item";
+          if (session.id === selectedSessionId) {
+            item.classList.add("selected");
+          }
+
+          const left = document.createElement("div");
+          const right = document.createElement("div");
+
+          const title = document.createElement("div");
+          title.className = "session-title";
+          title.textContent = session.label;
+
+          const meta = document.createElement("div");
+          meta.className = "session-meta";
+          const startStr = formatTimeHHMMSS(session.startTime);
+          const endStr = session.endTime ? formatTimeHHMMSS(session.endTime) : "ongoing";
+          meta.textContent = `Start: ${startStr} · End: ${endStr}`;
+
+          const statsLine = document.createElement("div");
+          statsLine.className = "session-stats-line";
+
+          if (session.samples.length) {
+            let min = Infinity;
+            let max = -Infinity;
+            let sum = 0;
+            session.samples.forEach((s) => {
+              if (s.v < min) min = s.v;
+              if (s.v > max) max = s.v;
+              sum += s.v;
+            });
+            const avg = sum / session.samples.length;
+            statsLine.textContent = `Samples: ${session.samples.length} · avg ${avg.toFixed(
+              1
+            )} ppm · min ${min} · max ${max}`;
+          } else {
+            statsLine.textContent = "No samples recorded yet";
+          }
+
+          left.appendChild(title);
+          left.appendChild(meta);
+          left.appendChild(statsLine);
+
+          const actions = document.createElement("div");
+          actions.className = "session-actions";
+
+          const btnView = document.createElement("button");
+          btnView.className = "secondary small";
+          btnView.textContent = "View";
+          btnView.addEventListener("click", () => {
+            selectedSessionId = session.id;
+            drawSessionChart();
+            renderSessionsList();
+            logEvent(`Viewing ${session.label} on historical chart`, "info");
+          });
+
+          const btnExportSession = document.createElement("button");
+          btnExportSession.className = "secondary small";
+          btnExportSession.textContent = "Export";
+          btnExportSession.addEventListener("click", () => {
+            exportSessionCSV(session);
+          });
+
+          const btnDelete = document.createElement("button");
+          btnDelete.className = "danger small";
+          btnDelete.textContent = "Delete";
+          btnDelete.addEventListener("click", () => {
+            const confirmDelete = confirm(`Delete ${session.label}?`);
+            if (confirmDelete) {
+              sessions = sessions.filter((s) => s.id !== session.id);
+              if (currentSession && currentSession.id === session.id) {
+                currentSession = null;
+                isMeasuring = false;
+                measurementStartTime = null;
+                measurementEndTime = null;
+                sessionStartEl.textContent = "--:--:--";
+                sessionEndEl.textContent = "--:--:--";
+                sessionElapsedEl.textContent = "00:00:00";
+                setStatsToEmpty();
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+              }
+              if (selectedSessionId === session.id) {
+                selectedSessionId = null;
+              }
+              renderSessionsList();
+              drawSessionChart();
+              updateSessionsSummaryTag();
+              logEvent(`${session.label} deleted`, "warn");
+            }
+          });
+
+          actions.appendChild(btnView);
+          actions.appendChild(btnExportSession);
+          actions.appendChild(btnDelete);
+
+          right.appendChild(actions);
+
+          item.appendChild(left);
+          item.appendChild(right);
+
+          sessionListEl.appendChild(item);
+        });
+    }
+
+    // ----- Historical session chart -----
+    const SESSION_MAX_POINTS = 400;
+
+    function drawSessionChart() {
+      const w = sessionChartCanvas.width;
+      const h = sessionChartCanvas.height;
+
+      sessionCtx.clearRect(0, 0, w, h);
+      sessionCtx.fillStyle = "#05070b";
+      sessionCtx.fillRect(0, 0, w, h);
+
+      const session = sessions.find((s) => s.id === selectedSessionId);
+      if (!session || !session.samples.length) {
+        selectedSessionLabel.textContent = "none";
+        return;
+      }
+
+      selectedSessionLabel.textContent = session.label;
+
+      const samples = session.samples;
+      const total = samples.length;
+
+      // okno scrollowane
+      let windowSize = Math.min(SESSION_MAX_POINTS, total);
+      let startIdx = 0;
+      if (total > windowSize) {
+        const pos = sessionScroll.valueAsNumber || 0; // 0..100
+        startIdx = Math.round((total - windowSize) * (pos / 100));
+      }
+      const subset = samples.slice(startIdx, startIdx + windowSize);
+
+      if (subset.length < 2) return;
+
+      let min = Infinity;
+      let max = -Infinity;
+      subset.forEach((s) => {
+        if (s.v < min) min = s.v;
+        if (s.v > max) max = s.v;
+      });
+      if (!isFinite(min) || !isFinite(max) || max === min) {
+        max = min + 1;
+      }
+
+      // siatka
+      sessionCtx.strokeStyle = "rgba(255,255,255,0.06)";
+      sessionCtx.lineWidth = 1;
+      sessionCtx.beginPath();
+      const gridLines = 4;
+      for (let i = 0; i <= gridLines; i++) {
+        const y = 10 + ((h - 30) * i) / gridLines;
+        sessionCtx.moveTo(40, y);
+        sessionCtx.lineTo(w - 6, y);
+      }
+      sessionCtx.stroke();
+
+      // oś czasu
+      sessionCtx.strokeStyle = "rgba(255,255,255,0.15)";
+      sessionCtx.beginPath();
+      sessionCtx.moveTo(40, h - 20);
+      sessionCtx.lineTo(w - 6, h - 20);
+      sessionCtx.stroke();
+
+      const timeSpan = subset[subset.length - 1].t - subset[0].t || 1;
+
+      sessionCtx.strokeStyle = "#00c896";
+      sessionCtx.lineWidth = 2;
+      sessionCtx.beginPath();
+
+      subset.forEach((s, idx) => {
+        const x =
+          40 +
+          ((w - 50) * (s.t - subset[0].t)) / timeSpan;
+        const norm = (s.v - min) / (max - min);
+        const y = h - 20 - norm * (h - 40);
+
+        if (idx === 0) sessionCtx.moveTo(x, y);
+        else sessionCtx.lineTo(x, y);
+      });
+      sessionCtx.stroke();
+    }
+
+    // ----- Timers / Clock -----
     function updateTimersUI() {
-      // zegar systemowy
       const now = new Date();
       systemClockEl.textContent = formatTimeHHMMSS(now);
 
@@ -801,56 +1259,68 @@
       sessionElapsedEl.textContent = formatElapsed(elapsedMs);
     }
 
-    function exportCSV() {
-      if (!measurementStartTime) {
-        alert("No active session. Start a session first.");
+    // ----- Exports -----
+    function exportCurrentSessionCSV() {
+      if (!currentSession || !currentSession.samples.length) {
+        alert("No active session with data to export.");
         return;
       }
-      const endRef = measurementEndTime
-        ? measurementEndTime.getTime()
-        : Date.now();
+      exportSessionCSV(currentSession);
+    }
 
-      const sessionSamples = samples.filter(
-        (s) => s.t >= measurementStartTime.getTime() && s.t <= endRef
-      );
-
-      if (!sessionSamples.length) {
-        alert("No data collected in this session.");
+    function exportSessionCSV(session) {
+      if (!session.samples.length) {
+        alert(`${session.label} has no data.`);
         return;
       }
 
-      let csv = "timestamp_iso,elapsed_s,co2_ppm\n";
-      for (const s of sessionSamples) {
+      let csv = "session_label,timestamp_iso,elapsed_s,co2_ppm\n";
+      const startMs = session.startTime.getTime();
+
+      session.samples.forEach((s) => {
         const ts = new Date(s.t).toISOString();
-        const elapsedSec = ((s.t - measurementStartTime.getTime()) / 1000).toFixed(3);
-        csv += `${ts},${elapsedSec},${s.v}\n`;
-      }
+        const elapsed = ((s.t - startMs) / 1000).toFixed(3);
+        csv += `${session.label},${ts},${elapsed},${s.v}\n`;
+      });
 
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
+      const timeTag = session.startTime.toISOString().replace(/[:.]/g, "-");
       a.href = url;
-      const tsLabel = new Date().toISOString().replace(/[:.]/g, "-");
-      a.download = `co2_session_${tsLabel}.csv`;
+      a.download = `${session.label.replace(/\s+/g, "_")}_${timeTag}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      logEvent(`Exported ${session.label} to CSV`, "info");
     }
 
-    // Event handlers
+    // ----- Event handlers -----
     btnConnect.addEventListener("click", () => connect());
     btnDisconnect.addEventListener("click", () => disconnect());
     btnStart.addEventListener("click", () => startSession());
     btnStop.addEventListener("click", () => stopSession());
     btnReset.addEventListener("click", () => resetSession());
-    btnExport.addEventListener("click", () => exportCSV());
+    btnExport.addEventListener("click", () => exportCurrentSessionCSV());
+    btnClearLive.addEventListener("click", () => clearLiveChart());
+    btnClearLog.addEventListener("click", () => {
+      logWindowEl.innerHTML = "";
+      logEvent("Log cleared", "system");
+    });
+
+    sessionScroll.addEventListener("input", () => {
+      drawSessionChart();
+    });
 
     // Zegar systemowy – update co sekundę
     setInterval(updateTimersUI, 1000);
 
     // Inicjalny rysunek
-    drawChart();
+    drawLiveChart();
+    drawSessionChart();
+    updateSessionsSummaryTag();
+    logEvent("Dashboard initialized (author: Paweł Bielka · bielka@agh.edu.pl)", "system");
   </script>
 </body>
 </html>
