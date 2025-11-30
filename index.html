@@ -52,7 +52,7 @@
       justify-content: space-between;
       gap: 8px;
       margin-bottom: 12px;
-      align-items: baseline;
+      align-items: center;
     }
 
     .subtitle {
@@ -63,6 +63,30 @@
     .tagline {
       font-size: 0.8rem;
       color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      text-align: right;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-row img {
+      height: 32px;
+      max-width: 90px;
+      object-fit: contain;
+      background: transparent;
+      border-radius: 4px;
+    }
+
+    .designer-note {
+      font-size: 0.75rem;
+      opacity: 0.9;
     }
 
     .layout {
@@ -75,6 +99,13 @@
     @media (max-width: 900px) {
       .layout {
         grid-template-columns: 1fr;
+      }
+      .tagline {
+        align-items: flex-start;
+        text-align: left;
+      }
+      .logo-row img {
+        height: 24px;
       }
     }
 
@@ -430,7 +461,23 @@
       </div>
     </div>
     <div class="tagline">
-      Designed by Paweł Bielka (bielka@agh.edu.pl)
+      <div class="logo-row">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Znak_graficzny_AGH.svg/250px-Znak_graficzny_AGH.svg.png"
+          alt="AGH University of Krakow logo"
+        />
+        <img
+          src="https://static.wixstatic.com/media/a007c0_96c802a37b0448b4b8e43c9d164fca92~mv2.png/v1/fill/w_88%2Ch_101%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01%2Cenc_avif%2Cquality_auto/idub_logo_pl_pion_edited_edited.png"
+          alt="Excellence Initiative – Research University logo"
+        />
+        <img
+          src="https://historia.agh.edu.pl/mediawiki/images/0/04/Logo_WWNiG.jpg"
+          alt="Faculty of Drilling, Oil and Gas (WWNiG) logo"
+        />
+      </div>
+      <div class="designer-note">
+        Designed by Paweł Bielka (bielka@agh.edu.pl)
+      </div>
     </div>
   </header>
 
