@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CO₂ Field Monitor – Dashboard</title>
+  <title>CO₂ High-Responsive Monitor: Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -455,9 +455,9 @@
 <body>
   <header class="app-header">
     <div>
-      <h1>CO₂ Dispersion Twin – Field Monitor</h1>
+      <h1>CO₂ Dispersion Twin: High-Reponsive Monitor</h1>
       <div class="subtitle">
-        Bluetooth live telemetry from Nano 33 IoT · high-responsive CO₂ sensor 2091-SPRINTIR-WF-20-ND
+        BLE telemetry Nano 33 IoT · CO₂ sensor: 2091-SPRINTIR-WF-20-ND <30Hz
       </div>
     </div>
     <div class="tagline">
@@ -476,7 +476,7 @@
         />
       </div>
       <div class="designer-note">
-        Designed by Paweł Bielka (bielka@agh.edu.pl)
+        IDUB AGH: D4 10688 · Designed by Paweł Bielka (bielka@agh.edu.pl)
       </div>
     </div>
   </header>
@@ -514,7 +514,7 @@
           <div class="timer-value" id="sessionStart">– – : – – : – –</div>
         </div>
         <div>
-          <div class="timer-label">Session end</div>
+          <div class="timer-label">Session end (local)</div>
           <div class="timer-value" id="sessionEnd">– – : – – : – –</div>
         </div>
         <div>
@@ -1366,7 +1366,7 @@
     drawLiveChart();
     drawSessionChart();
     updateSessionsSummaryTag();
-    logEvent("Dashboard initialized (author: Paweł Bielka · bielka@agh.edu.pl)", "system");
+    logEvent("Dashboard initialized (Designed by: Paweł Bielka · bielka@agh.edu.pl)", "system");
   </script>
 </body>
 </html>
